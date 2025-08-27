@@ -1,46 +1,15 @@
 {
-  "name": "Hyperon Metta Dev",
+  "name": "MeTTa Hyperon Dev (Existing Container)",
+  "runArgs": ["--name=metta-hyperon-dev"],
   "image": "trueagi/hyperon",
-
-  // Workspace setup
-  "workspaceFolder": "/workspace",
-  "mounts": ["source=${localWorkspaceFolder},target=/workspace,type=bind"],
-
-  // VS Code extensions for full dev experience
-  "extensions": [
-    "ms-python.python",
-    "ms-toolsai.jupyter",
-    "ms-vscode.cpptools",
-    "ms-azuretools.vscode-docker",
-    "mhutchie.git-graph",
-    "timonwong.shellcheck",
-    "ms-python.isort",
-    "ms-python.black-formatter"
+  "remoteUser": "root",
+  "workspaceFolder": "/home/root/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/home/root/workspace,type=bind"
   ],
-
-  // VS Code settings optimized for Hyperon/Metta dev
-  "settings": {
-    "terminal.integrated.defaultProfile.linux": "bash",
-    "python.defaultInterpreterPath": "/usr/bin/python3",
-    "jupyter.askForKernelRestart": false,
-    "jupyter.interactiveWindow.textEditor.executeSelection": true,
-    "files.associations": {
-      "*.metta": "plaintext"
+  "customizations": {
+    "vscode": {
+      "extensions": []
     }
-  },
-
-  // Install git + Jupyter + auto-open Metta REPL
-  "postCreateCommand": "apt-get update && apt-get install -y git && pip install jupyter ipykernel notebook jupyterlab",
-  "postStartCommand": "echo 'Starting Metta REPL...' && metta &",
-
-  // Forward Jupyter port for notebook access
-  "forwardPorts": [8888],
-  "portsAttributes": {
-    "8888": {
-      "label": "Jupyter Lab",
-      "onAutoForward": "notify"
-    }
-  },
-
-  "remoteUser": "root"
+  }
 }
