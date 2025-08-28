@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Core Security Guard Implementation - Phase 2 Enhanced Detection
+Core Security Guard Implementation - Phase 3 Advanced Reasoning
 """
 
 import time
@@ -14,6 +14,7 @@ from .core_types import (
 from .logging_utils import get_logger, performance_timer
 from .patterns import PatternMatcher
 from .sanitizer import TextSanitizer
+from .context_analyzer import ContextAwareAnalyzer, EnhancedSecurityResult
 
 
 class SecurityGuard:
@@ -27,18 +28,29 @@ class SecurityGuard:
         # Initialize Phase 2 components
         self._pattern_matcher = PatternMatcher(self.config)
         self._sanitizer = TextSanitizer(self.config)
-        self._symbolic_reasoner = None
+        
+        # Initialize Phase 3 components
+        self._context_analyzer = ContextAwareAnalyzer(self._pattern_matcher)
+        self._phase = 3  # Current implementation phase
         
         # Performance tracking
         self._initialization_time = time.time()
         
-        self.logger.logger.info("Security Guard initialized with Phase 2 enhancements")
+        self.logger.logger.info("Security Guard initialized with Phase 3 Advanced Reasoning")
     
-    def guard_prompt(self, user_prompt: str, context: Optional[SecurityContext] = None) -> SecurityResult:
-        """Analyze user prompt for security threats"""
+    def guard_prompt(self, user_prompt: str, context: Optional[SecurityContext] = None, 
+                     metadata: Dict[str, Any] = None) -> SecurityResult:
+        """Analyze user prompt for security threats using Phase 3 advanced reasoning"""
         with performance_timer() as timer:
             try:
-                result = self._analyze_prompt_enhanced(user_prompt, context)
+                # Use Phase 3 enhanced analysis
+                enhanced_result = self._context_analyzer.enhanced_analyze(
+                    user_prompt, metadata or {}, context
+                )
+                
+                # Convert to SecurityResult for backward compatibility
+                result = self._convert_enhanced_result(enhanced_result)
+                
             except Exception as e:
                 error_result = SecurityResult(
                     decision=SecurityDecision.BLOCK,
@@ -62,11 +74,19 @@ class SecurityGuard:
         self.logger.log_security_decision(user_prompt, result, context)
         return result
     
-    def guard_response(self, model_output: str, context: Optional[SecurityContext] = None) -> SecurityResult:
-        """Analyze model response for security threats"""
+    def guard_response(self, model_output: str, context: Optional[SecurityContext] = None,
+                      metadata: Dict[str, Any] = None) -> SecurityResult:
+        """Analyze model response for security threats using Phase 3 advanced reasoning"""
         with performance_timer() as timer:
             try:
-                result = self._analyze_response_enhanced(model_output, context)
+                # Use Phase 3 enhanced analysis
+                enhanced_result = self._context_analyzer.enhanced_analyze(
+                    model_output, metadata or {}, context
+                )
+                
+                # Convert to SecurityResult for backward compatibility
+                result = self._convert_enhanced_result(enhanced_result)
+                
             except Exception as e:
                 error_result = SecurityResult(
                     decision=SecurityDecision.BLOCK,
@@ -265,16 +285,19 @@ class SecurityGuard:
             stats["pattern_matcher"] = self._pattern_matcher.get_statistics()
         if self._sanitizer:
             stats["text_sanitizer"] = self._sanitizer.get_statistics()
+        if self._context_analyzer:
+            stats["context_analyzer"] = self._context_analyzer.get_statistics()
         
         stats.update({
             "initialization_time": self._initialization_time,
             "uptime_seconds": time.time() - self._initialization_time,
-            "config_version": "phase2_enhanced",
-            "phase": 2,
+            "config_version": "phase3_advanced_reasoning",
+            "phase": 3,
             "components_loaded": {
                 "pattern_matcher": self._pattern_matcher is not None,
                 "text_sanitizer": self._sanitizer is not None,
-                "symbolic_reasoner": self._symbolic_reasoner is not None
+                "context_analyzer": self._context_analyzer is not None,
+                "symbolic_reasoning": True
             }
         })
         return stats
@@ -331,4 +354,110 @@ class SecurityGuard:
             "original_text": test_text,
             "sanitized_text": sanitized_text,
             "metadata": metadata
+        }
+    
+    def _convert_enhanced_result(self, enhanced_result: EnhancedSecurityResult) -> SecurityResult:
+        """
+        Convert EnhancedSecurityResult to SecurityResult for backward compatibility
+        
+        Args:
+            enhanced_result: Phase 3 enhanced result
+            
+        Returns:
+            Compatible SecurityResult
+        """
+        # Extract sanitized text if available
+        sanitized_text = None
+        sanitization_metadata = None
+        
+        if enhanced_result.decision == SecurityDecision.SANITIZE:
+            # Use sanitizer to get sanitized version
+            original_metadata = enhanced_result.metadata.get("original_metadata", {})
+            if "sanitized_text" in original_metadata:
+                sanitized_text = original_metadata["sanitized_text"]
+                sanitization_metadata = original_metadata.get("sanitization_metadata")
+        
+        # Create backward-compatible metadata
+        compatible_metadata = {
+            "phase": 3,
+            "analysis_type": "context_aware_symbolic_reasoning",
+            "input_length": enhanced_result.metadata.get("input_length", 0),
+            "patterns_found": len(enhanced_result.matched_patterns),
+            "context_type": enhanced_result.context_analysis.context_type.value,
+            "context_confidence": enhanced_result.context_analysis.confidence,
+            "symbolic_facts_count": len(enhanced_result.symbolic_facts),
+            "sanitized_text": sanitized_text,
+            "sanitization_metadata": sanitization_metadata
+        }
+        
+        return SecurityResult(
+            decision=enhanced_result.decision,
+            confidence=enhanced_result.confidence,
+            threat_score=enhanced_result.threat_score,
+            matched_patterns=enhanced_result.matched_patterns,
+            reasoning_chain=enhanced_result.reasoning_chain,
+            processing_time_ms=enhanced_result.processing_time_ms,
+            metadata=compatible_metadata
+        )
+    
+    # Phase 3 specific methods
+    
+    def analyze_with_context(self, text: str, context_metadata: Dict[str, Any]) -> EnhancedSecurityResult:
+        """
+        Direct access to Phase 3 enhanced analysis
+        
+        Args:
+            text: Text to analyze
+            context_metadata: Context metadata for analysis
+            
+        Returns:
+            Enhanced security result with full Phase 3 capabilities
+        """
+        return self._context_analyzer.enhanced_analyze(text, context_metadata)
+    
+    def add_context_patterns(self, context_type: str, patterns: List[str]):
+        """
+        Add new context detection patterns
+        
+        Args:
+            context_type: Type of context (educational, research, etc.)
+            patterns: List of regex patterns for detection
+        """
+        from .context_analyzer import ContextType
+        
+        try:
+            context_enum = ContextType(context_type.lower())
+            pattern_dict = {context_enum: patterns}
+            self._context_analyzer.update_context_patterns(pattern_dict)
+            self.logger.logger.info(f"Added {len(patterns)} patterns for context {context_type}")
+        except ValueError:
+            self.logger.logger.warning(f"Invalid context type: {context_type}")
+    
+    def add_reasoning_rule(self, rule_name: str, premises: List[str], conclusion: str, 
+                          confidence: float = 1.0, description: str = ""):
+        """
+        Add custom reasoning rule to the symbolic engine
+        
+        Args:
+            rule_name: Unique rule identifier
+            premises: List of logical premises
+            conclusion: Rule conclusion
+            confidence: Rule confidence level
+            description: Human-readable description
+        """
+        self._context_analyzer.add_reasoning_rule(
+            rule_name, premises, conclusion, confidence, description
+        )
+        self.logger.logger.info(f"Added reasoning rule: {rule_name}")
+    
+    def get_enhanced_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive Phase 3 statistics"""
+        base_stats = self.get_statistics()
+        context_stats = self._context_analyzer.get_statistics()
+        
+        return {
+            **base_stats,
+            "phase": 3,
+            "context_analyzer": context_stats,
+            "advanced_reasoning": True
         }
