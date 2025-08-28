@@ -1,0 +1,39 @@
+# MeTTa LLM Security Guard - Production Configuration
+# This YAML file defines the default configuration for the security guard system
+
+# Severity levels with numeric ordering (higher = more severe)
+severity_levels:
+  ALLOW: 0
+  REVIEW: 1
+  SANITIZE: 2
+  BLOCK: 3
+
+# Decision thresholds (0.0 to 1.0)
+block_threshold: 0.8      # Block requests with threat score >= 0.8
+review_threshold: 0.5     # Flag for human review with score >= 0.5
+sanitize_threshold: 0.3   # Apply sanitization with score >= 0.3
+
+# Pattern weights for threat scoring
+pattern_weights:
+  jailbreak: 1.0           # DAN-mode and role-playing exploits
+  escape_codes: 0.8        # ANSI/terminal escape sequences
+  hacking_tools: 0.7       # References to penetration testing tools
+  prompt_injection: 0.95   # Instructions to ignore system prompts
+
+# Feature flags for gradual deployment
+enable_symbolic_reasoning: true    # Use MeTTa-based reasoning engine
+enable_pattern_learning: false     # Adaptive pattern learning (experimental)
+enable_detailed_logging: true      # Comprehensive audit logging
+enable_performance_monitoring: true # Performance metrics collection
+
+# Performance tuning
+max_processing_time_ms: 500        # Maximum processing time per request
+pattern_cache_size: 1000           # Number of compiled patterns to cache
+enable_parallel_processing: false  # Concurrent pattern matching (experimental)
+
+# Logging configuration
+logging:
+  level: INFO                      # Log level (DEBUG, INFO, WARN, ERROR)
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/security_guard.log"  # Log file path
+  max_file_size_mb: 10            # Log rotation threshold

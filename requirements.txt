@@ -2,9 +2,17 @@
 requests>=2.28.0
 python-dotenv>=0.19.0
 
-# MeTTa language runtime (optional - falls back to Python if not available)
+# Phase 1 Core Infrastructure Dependencies
+PyYAML>=6.0
+psutil>=5.8.0  # For performance monitoring
+
+# MeTTa language runtime (required for symbolic reasoning)
 # Install with: pip install hyperon
-# hyperon>=0.1.0
+hyperon>=0.1.0
+
+# Testing framework
+pytest>=7.0.0
+pytest-timeout>=2.1.0
 
 # For development and testing
 pytest>=7.0.0
