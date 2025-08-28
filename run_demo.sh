@@ -40,7 +40,9 @@ show_menu() {
     echo "1) test_prompt_injection  - Test 100 attack prompts without security guardrails"
     echo "2) test_metta_integration - Test MeTTa security engine integration"
     echo "3) run_security_demo     - Run full security demo with MeTTa guardrails"
-    echo "4) quit                  - Exit"
+    echo "4) enhanced_security_demo - Run enhanced demo with Phase 1-3 security guard"
+    echo "5) test_integration      - Test the enhanced integration components"
+    echo "6) quit                  - Exit"
     echo ""
 }
 
@@ -64,8 +66,32 @@ run_test_metta_integration() {
 run_security_demo() {
     echo "Running run_security_demo.py..."
     echo "This will run 100 attack scenarios with MeTTa security guardrails."
+    echo "Note: Now enhanced with Phase 1-3 security guard when available!"
     echo ""
     python run_security_demo.py "$@"
+}
+
+# Function to run enhanced security demo
+run_enhanced_security_demo() {
+    echo "Running enhanced_security_demo.py..."
+    echo "This runs the enhanced Phase 1-3 security guard with real Ollama integration."
+    echo ""
+    python enhanced_security_demo.py "$@"
+}
+
+# Function to run integration tests
+run_integration_tests() {
+    echo "Running integration tests..."
+    echo "This tests the enhanced security gateway and Ollama connector."
+    echo ""
+    python -c "
+import sys
+sys.path.append('.')
+from security_gateway import test_integration
+from ollama_connector import test_ollama_connection
+test_integration()
+test_ollama_connection()
+"
 }
 
 # Main menu loop
@@ -73,7 +99,7 @@ if [ $# -eq 0 ]; then
     # Interactive mode - show menu
     while true; do
         show_menu
-        read -p "Choose an option (1-4): " choice
+        read -p "Choose an option (1-6): " choice
         echo ""
         
         case $choice in
@@ -95,12 +121,24 @@ if [ $# -eq 0 ]; then
                 read -p "Press Enter to continue..."
                 echo ""
                 ;;
-            4|quit|q)
+            4)
+                run_enhanced_security_demo
+                echo ""
+                read -p "Press Enter to continue..."
+                echo ""
+                ;;
+            5)
+                run_integration_tests
+                echo ""
+                read -p "Press Enter to continue..."
+                echo ""
+                ;;
+            6|quit|q)
                 echo "Goodbye!"
                 exit 0
                 ;;
             *)
-                echo "Invalid option. Please choose 1-4."
+                echo "Invalid option. Please choose 1-6."
                 echo ""
                 ;;
         esac
@@ -120,15 +158,25 @@ else
             shift
             run_security_demo "$@"
             ;;
+        enhanced_security_demo|4)
+            shift
+            run_enhanced_security_demo "$@"
+            ;;
+        test_integration|5)
+            shift
+            run_integration_tests "$@"
+            ;;
         help|--help|-h)
             echo "Usage: $0 [OPTION] [ARGS...]"
             echo ""
             show_menu
             echo "Examples:"
             echo "  $0                           # Interactive mode"
-            echo "  $0 run_security_demo         # Run security demo directly"
+            echo "  $0 run_security_demo         # Run original security demo (now enhanced)"
+            echo "  $0 enhanced_security_demo    # Run enhanced demo with Phase 1-3 guard"
             echo "  $0 test_prompt_injection     # Run prompt injection tests"
             echo "  $0 test_metta_integration    # Test MeTTa integration"
+            echo "  $0 test_integration          # Test enhanced components"
             echo "  $0 run_security_demo --help  # Show help for specific script"
             ;;
         *)
