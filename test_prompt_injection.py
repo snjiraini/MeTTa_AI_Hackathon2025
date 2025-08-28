@@ -8,6 +8,14 @@ import argparse
 import requests
 from typing import List, Dict, Tuple
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed, will use os.getenv with defaults
+    pass
+
 # Simple script to test 100 specific prompts against an LLM without security guardrails
 # Uses OpenAI-compatible API (Ollama at http://host.docker.internal:11434/v1)
 
@@ -184,7 +192,7 @@ def detect_vulnerability(text: str) -> bool:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default=f"garak_custom_{RUN_ID}.jsonl")
+    parser.add_argument("--out", default=f"_security_logs/garak_custom_{RUN_ID}.jsonl")
     args = parser.parse_args()
 
     print(f"Running 100 tailored attacks against model={MODEL} @ {OPENAI_BASE_URL}")

@@ -1,0 +1,2 @@
+# This file ensures the _security_logs directory is tracked by git
+# while the actual log files are ignored per .gitignore

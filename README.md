@@ -30,14 +30,21 @@ Think of it as a **smart firewall** for your AI models that:
 ### Prerequisites
 - Python 3.8+
 - Local LLM server (like Ollama) running on `http://localhost:11434`
-- Required packages: `requests`
+- Required packages: `requests`, `python-dotenv`
 
 ### 1. Install Dependencies
 ```bash
-pip install requests
+pip install -r requirements.txt
 ```
 
-### 2. Start Your Local LLM (Optional)
+### 2. Configure Environment
+Copy the template and customize your settings:
+```bash
+cp .env.template .env
+# Edit .env with your preferred values
+```
+
+### 3. Start Your Local LLM (Optional)
 If using Ollama:
 ```bash
 # Install Ollama first, then:
@@ -45,22 +52,35 @@ ollama serve
 ollama pull dolphin-llama3  # or your preferred model
 ```
 
-### 3. Test the Security Engine
+### 4. Run the Demo Scripts
+
+#### Option A: Use the Convenience Script (Recommended)
 ```bash
-# Run the core security engine with example attacks
-python metta_llm_security.py
+# Interactive mode - shows menu with options
+./run_demo.sh
+
+# Or run specific tests directly
+./run_demo.sh test_metta_integration    # Test MeTTa security engine
+./run_demo.sh test_prompt_injection     # Test 100 attacks without guardrails
+./run_demo.sh run_security_demo         # Run full security demo with guardrails
 ```
 
-### 4. Run Full Security Demo
+#### Option B: Run Scripts Directly
 ```bash
-# Test 100 attack scenarios with security guardrails
+# Test the MeTTa security engine integration
+python test_metta_integration.py
+
+# Test 100 attack scenarios without security guardrails
+python test_prompt_injection.py
+
+# Run full security demo with MeTTa guardrails
 python run_security_demo.py --model dolphin-llama3
 ```
 
 ### 5. Analyze Results
 ```bash
 # View which attacks were blocked vs allowed
-python analyze_garak_hits.py results.jsonl
+python analyze_garak_hits.py _security_logs/security_demo_*.jsonl
 ```
 
 ## 🔍 How It Works

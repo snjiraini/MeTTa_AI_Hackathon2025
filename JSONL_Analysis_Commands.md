@@ -6,29 +6,29 @@ This document contains the commands used to read and analyze the security demo o
 
 ### List all JSONL output files
 ```bash
-ls -la security_demo_*.jsonl
+ls -la _security_logs/security_demo_*.jsonl
 ```
 
 ### Get the most recent JSONL file
 ```bash
-ls -la security_demo_*.jsonl | tail -1
+ls -la _security_logs/security_demo_*.jsonl | tail -1
 ```
 
 ## JSON Analysis Commands
 
 ### Using jq (if available)
 ```bash
-# Extract specific fields from JSONL entries
-head -3 security_demo_*.jsonl | tail -1 | jq -c '{seq: .seq, prompt: .prompt[:50], prompt_action: .prompt_action, final_text: .final_text[:100]}'
+# Quick peek at one record
+head -3 _security_logs/security_demo_*.jsonl | tail -1 | jq -c '{seq: .seq, prompt: .prompt[:50], prompt_action: .prompt_action, final_text: .final_text[:100]}'
 
-# Pretty print a single JSONL entry
-head -1 security_demo_*.jsonl | jq '.'
+# Full structure of first record
+head -1 _security_logs/security_demo_*.jsonl | jq '.'
 
-# Extract all prompt actions
-cat security_demo_*.jsonl | jq -r '.prompt_action'
+# Show all prompt actions taken
+cat _security_logs/security_demo_*.jsonl | jq -r '.prompt_action'
 
-# Count blocked vs allowed actions
-cat security_demo_*.jsonl | jq -r '.prompt_action' | sort | uniq -c
+# Count prompt actions
+cat _security_logs/security_demo_*.jsonl | jq -r '.prompt_action' | sort | uniq -c
 ```
 
 ### Using Python (when jq is not available)
@@ -38,7 +38,8 @@ cat security_demo_*.jsonl | jq -r '.prompt_action' | sort | uniq -c
 import json
 
 # Read and display first 3 test results
-with open('security_demo_ae9f5ed209134de9833038ac124aadde.jsonl', 'r') as f:
+# Using Python for more complex analysis
+with open('_security_logs/security_demo_ae9f5ed209134de9833038ac124aadde.jsonl', 'r') as f:
     for i, line in enumerate(f):
         if i < 3:
             data = json.loads(line)

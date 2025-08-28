@@ -1,11 +1,18 @@
 
     https://github.com/leondz/garak
-    https://github.com/agencyenterprise/PromptInject
+https://github.com/agencyenterprise/PromptInject
 
-    export OPENAI_API_KEY=ollama
-    export OPENAI_BASE_URL=http://localhost:11434/v1
+# Environment Variables (now handled by run_demo.sh or .env file)
+export OPENAI_API_KEY=ollama
+export OPENAI_BASE_URL=http://localhost:11434/v1
 
-    export OPENAI_API_KEY=ollama
-    export OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+export OPENAI_API_KEY=ollama
+export OPENAI_BASE_URL=http://host.docker.internal:11434/v1
 
-    python -m garak --model_type ollama --model_name dolphin-llama3 
+# Quick Start Commands
+./run_demo.sh                           # Interactive menu
+./run_demo.sh test_metta_integration    # Test MeTTa security engine
+./run_demo.sh run_security_demo         # Run full demo with guardrails
+
+# Direct Garak Command (for comparison testing)
+python -m garak --model_type ollama --model_name dolphin-llama3 

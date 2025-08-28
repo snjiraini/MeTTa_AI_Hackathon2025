@@ -209,11 +209,11 @@ def analyze_structure(file_path: str):
 if __name__ == "__main__":
     # Example with your files
     print("=== Garak Report Analysis ===")
-    garak_report = "/home/root/workspace/docs/garak.report.jsonl"
+    garak_report = "docs/garak.report.jsonl"
     if Path(garak_report).exists():
         quick_view(garak_report, max_rows=5)
         
     print("\n=== Security Demo Analysis ===")  
-    security_demo = "/home/root/workspace/security_demo_7ce74a289ad34d528b12ea96407d8e05.jsonl"
+    security_demo = "_security_logs/security_demo_7ce74a289ad34d528b12ea96407d8e05.jsonl"
     if Path(security_demo).exists():
         quick_view(security_demo, max_rows=5)

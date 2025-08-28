@@ -30,6 +30,14 @@ from typing import Dict, Any, List
 
 import requests
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed, will use os.getenv with defaults
+    pass
+
 # Import MeTTa runtime - required for this application
 try:
     from hyperon import MeTTa
@@ -54,7 +62,7 @@ class MeTTaSecurityWrapper:
         self.metta = MeTTa()
         try:
             # Load the MeTTa security file
-            with open('/home/root/workspace/metta_llm_security.metta', 'r') as f:
+            with open('metta_llm_security.metta', 'r') as f:
                 metta_code = f.read()
             
             # Execute the MeTTa code line by line
@@ -114,35 +122,13 @@ class MeTTaSecurityWrapper:
                         "message_override": ""
                     }
             
-            # Fallback security checks if MeTTa doesn't return expected format
-            if "DAN Mode" in user_prompt:
-                return {
-                    "severity": "BLOCK",
-                    "reason": "DAN jailbreak attempt detected",
-                    "action": "block",
-                    "message_override": "I can't assist with that request."
-                }
-            elif "Metasploit" in user_prompt:
-                return {
-                    "severity": "BLOCK", 
-                    "reason": "Hacking tool mentioned",
-                    "action": "block",
-                    "message_override": "I can't assist with that request."
-                }
-            elif any(word in user_prompt.lower() for word in ["hack", "exploit", "bypass"]):
-                return {
-                    "severity": "BLOCK",
-                    "reason": "Security-related keywords detected",
-                    "action": "block",
-                    "message_override": "I can't assist with that request."
-                }
-            else:
-                return {
-                    "severity": "ALLOW",
-                    "reason": "No threats detected",
-                    "action": "allow", 
-                    "message_override": ""
-                }
+            # If MeTTa doesn't return expected format, fail securely
+            return {
+                "severity": "BLOCK",
+                "reason": "MeTTa guard returned unexpected format",
+                "action": "block",
+                "message_override": "I can't process that request due to a security check error."
+            }
                 
         except Exception as e:
             print(f"Error calling MeTTa guard-prompt: {e}")
@@ -198,30 +184,13 @@ class MeTTaSecurityWrapper:
                         "text": clean_output
                     }
             
-            # Fallback security checks if MeTTa doesn't return expected format
-            if "DAN:" in model_output or "GPT:" in model_output:
-                return {
-                    "severity": "BLOCK",
-                    "reason": "Dual-output jailbreak detected",
-                    "action": "block",
-                    "text": "I can't provide that response."
-                }
-            elif "Metasploit" in model_output:
-                return {
-                    "severity": "BLOCK",
-                    "reason": "Hacking content detected",
-                    "action": "block",
-                    "text": "I can't provide that response."
-                }
-            else:
-                # Clean ANSI sequences (basic sanitization)
-                clean_output = model_output.replace("\x1b[", "").replace("\033[", "")
-                return {
-                    "severity": "ALLOW",
-                    "reason": "Response appears safe",
-                    "action": "allow",
-                    "text": clean_output
-                }
+            # If MeTTa doesn't return expected format, fail securely
+            return {
+                "severity": "BLOCK",
+                "reason": "MeTTa guard returned unexpected format",
+                "action": "block",
+                "text": "I can't provide that response due to a security check error."
+            }
                 
         except Exception as e:
             print(f"Error calling MeTTa guard-response: {e}")
@@ -465,8 +434,8 @@ def main():
                        help="Maximum response tokens (default: 512)")
     parser.add_argument("--timeout", type=int, default=int(os.getenv("TIMEOUT", "60")),
                        help="Request timeout in seconds (default: 60)")
-    parser.add_argument("--out", default=f"security_demo_{uuid.uuid4().hex}.jsonl",
-                       help="Output file for results (default: auto-generated)")
+    parser.add_argument("--out", default=f"_security_logs/security_demo_{uuid.uuid4().hex}.jsonl",
+                       help="Output file for results (default: auto-generated in _security_logs/)")
     
     args = parser.parse_args()
 
