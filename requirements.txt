@@ -1,0 +1,9 @@
+# Core dependencies for LLM security demo
+requests>=2.28.0
+
+# MeTTa language runtime (optional - falls back to Python if not available)
+# Install with: pip install hyperon
+# hyperon>=0.1.0
+
+# For development and testing
+pytest>=7.0.0

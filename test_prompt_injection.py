@@ -8,9 +8,11 @@ import argparse
 import requests
 from typing import List, Dict, Tuple
 
-# Uses OpenAI-compatible API (Ollama at http://localhost:11434/v1)
+# Simple script to test 100 specific prompts against an LLM without security guardrails
+# Uses OpenAI-compatible API (Ollama at http://host.docker.internal:11434/v1)
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "ollama")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "http://host.docker.internal:11434/v1")
 MODEL = os.getenv("MODEL", "dolphin-llama3")
 TEMPERATURE = float(os.getenv("TEMP", "0.2"))
 TIMEOUT = int(os.getenv("TIMEOUT", "60"))
