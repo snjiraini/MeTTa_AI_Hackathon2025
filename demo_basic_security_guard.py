@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Phase 1 Demonstration - MeTTa LLM Security Guard Core Infrastructure
+Basic Security Guard Demonstration - MeTTa LLM Security Guard Core Infrastructure
 
 This demonstration shows the Phase 1 implementation working with:
 - Configuration management (YAML + environment variables)

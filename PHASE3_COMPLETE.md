@@ -255,7 +255,7 @@ Phase 3 Advanced Reasoning provides sophisticated decision-making capabilities f
 - `src/context_analyzer.py` - Context-aware security analyzer
 - `src/metta_advanced_reasoning.metta` - Advanced symbolic knowledge base
 - `tests/test_phase3_advanced.py` - Comprehensive Phase 3 test suite
-- `demo_phase3.py` - Phase 3 demonstration script
+- `demo_context_aware_reasoning.py` - Phase 3 demonstration script
 
 ### Modified Files
 - `src/security_guard.py` - Enhanced with Phase 3 context-aware capabilities

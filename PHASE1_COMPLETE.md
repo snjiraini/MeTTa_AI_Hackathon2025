@@ -62,7 +62,7 @@ Phase 1 focused on building the foundational infrastructure required for subsequ
 │   ├── test_security_guard.py   # Core functionality tests
 │   ├── test_integration.py      # Integration tests
 │   └── run_phase1_tests.py      # Test runner
-├── demo_phase1.py               # Phase 1 demonstration
+├── demo_basic_security_guard.py  # Phase 1 demonstration
 └── requirements.txt             # Updated dependencies
 ```
 

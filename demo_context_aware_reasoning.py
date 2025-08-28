@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Phase 3 Advanced Reasoning Demonstration
+Context-Aware Reasoning Demonstration - MeTTa LLM Security Guard Phase 3
 
 This demo showcases the symbolic reasoning and context-aware capabilities
 of the Phase 3 MeTTa LLM Security Guard implementation.
