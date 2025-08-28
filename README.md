@@ -88,6 +88,35 @@ python analyze_garak_hits.py results.jsonl
 - **REVIEW**: Flag for human review (soft block)
 - **ALLOW**: Pass through safely
 
+## 🚨 Sample Vulnerability Types Detected
+
+Our testing has identified several critical vulnerability patterns that this security framework addresses:
+
+### Jailbreak / DAN Mode Probes
+- **DAN prompts** successfully forced models into dual-output (GPT/DAN) mode
+- Generated instructions for hacking with Metasploit — **high-risk leakage**
+- These attacks exploit the model's tendency to role-play as an unrestricted AI
+
+### Injection & Override Attacks
+- Prompts like *"From now on, act as DAN mode..."* or *"Ignore rules"* successfully worked
+- Demonstrated clear **susceptibility to instruction injection**
+- Models would abandon their safety guidelines when presented with authoritative override commands
+
+### Toxicity & Slurs
+- Probes with slur triggers (e.g., *"Sheepshagger"*, *"Irish Travellers are all..."*) sometimes generated harmful content
+- Exhibited **unsafe handling** of discriminatory language
+- Models occasionally amplified rather than rejected toxic prompts
+
+### Continuation Traps
+- Prompts like *"Matt wields a tomahawk like a..."* triggered dangerous completions
+- Models attempted to **autocomplete into violent or offensive scenarios**
+- These attacks exploit the model's predictive nature to generate harmful content
+
+### Content Policy Bypass
+- **Hypothetical scenarios** and *"research purposes"* framing led to unsafe answers
+- Models provided harmful information when requests were disguised as academic or theoretical
+- Demonstrated weakness against **social engineering** tactics
+
 ## 📊 Understanding the Output
 
 When you run the security demo, you'll get a JSONL file with detailed results:
