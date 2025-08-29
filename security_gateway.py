@@ -30,20 +30,34 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 # Add src directory to path for enhanced security components  
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
+# Initialize availability flags
+METTA_GUARD_AVAILABLE = False
+ENHANCED_GUARD_AVAILABLE = False
+
 try:
-    # Import enhanced MeTTa Security Guard components with absolute imports
-    import src.security_guard as sg
+    # Import MeTTa-orchestrated Security Guard components
+    import src.metta_security_guard as msg
     import src.core_types as ct
     import src.config as cfg
-    SecurityGuard = sg.SecurityGuard
+    MeTTaSecurityGuard = msg.MeTTaSecurityGuard
     SecurityContext = ct.SecurityContext
     get_config = cfg.get_config
-    print("✅ Enhanced MeTTa Security Guard loaded successfully")
-    ENHANCED_GUARD_AVAILABLE = True
+    print("✅ MeTTa-Orchestrated Security Guard loaded successfully")
+    METTA_GUARD_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️  Enhanced Security Guard not available: {e}")
+    print(f"⚠️  MeTTa Security Guard not available: {e}")
     print("📝 Falling back to basic MeTTa wrapper...")
+    METTA_GUARD_AVAILABLE = False
+
+# Try legacy enhanced guard as fallback
+try:
+    import src.security_guard as sg
+    SecurityGuard = sg.SecurityGuard
+    ENHANCED_GUARD_AVAILABLE = True
+    print("✅ Legacy Enhanced Security Guard loaded as fallback")
+except ImportError:
     ENHANCED_GUARD_AVAILABLE = False
+    print("❌ No enhanced guards available")
 
 # Import original MeTTa runtime for fallback compatibility
 try:
@@ -56,10 +70,10 @@ except ImportError:
 
 class EnhancedSecurityGateway:
     """
-    Enhanced Security Gateway that integrates the new MeTTa Security Guard
+    Enhanced Security Gateway that integrates the MeTTa-Orchestrated Security Guard
     
     This class provides a drop-in replacement for MeTTaSecurityWrapper while
-    adding the enhanced symbolic reasoning capabilities. It maintains backward
+    using the new MeTTa orchestration capabilities. It maintains backward
     compatibility with existing demo scripts.
     """
     
@@ -68,28 +82,51 @@ class EnhancedSecurityGateway:
         Initialize the Enhanced Security Gateway
         
         Args:
-            use_enhanced_guard: If True, use the enhanced security guard from src/
-                              If False, use the original basic MeTTa wrapper
+            use_enhanced_guard: If True, use the MeTTa-orchestrated security guard
+                              If False, use fallback implementations
         """
-        self.use_enhanced_guard = use_enhanced_guard and ENHANCED_GUARD_AVAILABLE
+        self.use_metta_guard = use_enhanced_guard and METTA_GUARD_AVAILABLE
+        self.use_enhanced_guard = use_enhanced_guard and ENHANCED_GUARD_AVAILABLE and not self.use_metta_guard
         self.logger_enabled = True
         
-        # Initialize enhanced security guard if available
-        if self.use_enhanced_guard:
+        # Initialize MeTTa-orchestrated security guard if available
+        if self.use_metta_guard:
             try:
-                self.enhanced_guard = SecurityGuard()
+                self.metta_guard = MeTTaSecurityGuard()
                 self.security_context = SecurityContext(
                     usage_context="security_demo",
                     user_type="demo_user", 
                     session_id=f"demo_session_{int(time.time())}",
                     timestamp=time.time()
                 )
-                self._log("✅ Enhanced MeTTa Security Guard initialized")
+                self._log("✅ MeTTa-Orchestrated Security Guard initialized")
             except Exception as e:
-                self._log(f"❌ Failed to initialize enhanced guard: {e}")
-                self.use_enhanced_guard = False
-                self._fallback_to_basic()
+                self._log(f"❌ Failed to initialize MeTTa guard: {e}")
+                self.use_metta_guard = False
+                self.use_enhanced_guard = ENHANCED_GUARD_AVAILABLE
+                if self.use_enhanced_guard:
+                    self._init_enhanced_guard()
+                else:
+                    self._fallback_to_basic()
+        elif self.use_enhanced_guard:
+            self._init_enhanced_guard()
         else:
+            self._fallback_to_basic()
+            
+    def _init_enhanced_guard(self):
+        """Initialize enhanced security guard (legacy fallback)"""
+        try:
+            self.enhanced_guard = SecurityGuard()
+            self.security_context = SecurityContext(
+                usage_context="security_demo",
+                user_type="demo_user", 
+                session_id=f"demo_session_{int(time.time())}",
+                timestamp=time.time()
+            )
+            self._log("✅ Enhanced MeTTa Security Guard initialized (legacy)")
+        except Exception as e:
+            self._log(f"❌ Failed to initialize enhanced guard: {e}")
+            self.use_enhanced_guard = False
             self._fallback_to_basic()
     
     def _fallback_to_basic(self):
@@ -130,24 +167,92 @@ class EnhancedSecurityGateway:
     
     def guard_prompt(self, user_prompt: str) -> Dict[str, str]:
         """
-        Guard user prompt using enhanced or basic security analysis
-        
-        This method provides a compatible interface with the original MeTTaSecurityWrapper
-        while using enhanced reasoning when available.
+        Guard user prompt using MeTTa orchestration or fallback methods
         
         Args:
-            user_prompt: The user's input text to analyze
+            user_prompt: The user's input prompt
             
         Returns:
-            Dictionary with keys: 'severity', 'reason', 'action', 'message_override'
-            Compatible with original MeTTaSecurityWrapper format
+            Dictionary with severity, reason, action, and message_override
         """
-        start_time = time.time()
+        try:
+            if self.use_metta_guard:
+                return self._metta_guard_prompt(user_prompt)
+            elif self.use_enhanced_guard:
+                return self._enhanced_guard_prompt(user_prompt)
+            elif self.metta:
+                return self._basic_guard_prompt(user_prompt)
+            else:
+                return self._heuristic_guard_prompt(user_prompt)
+        except Exception as e:
+            self._log(f"❌ Prompt guard error: {e}")
+            return {
+                "severity": "BLOCK",
+                "reason": f"Security analysis error: {str(e)[:100]}",
+                "action": "block",
+                "message_override": "I can't process that request due to a security check error."
+            }
+    
+    def _metta_guard_prompt(self, user_prompt: str) -> Dict[str, str]:
+        """Use MeTTa-orchestrated Security Guard for prompt analysis"""
+        try:
+            # Analyze prompt using MeTTa orchestrator
+            result = self.metta_guard.guard_prompt(
+                user_prompt,
+                context=self.security_context,
+                metadata={"source": "user_prompt", "timestamp": time.time()}
+            )
+            
+            # Convert SecurityResult to gateway format
+            return self._convert_security_result_to_gateway(result, user_prompt)
+            
+        except Exception as e:
+            self._log(f"❌ MeTTa guard prompt error: {e}")
+            return {
+                "severity": "BLOCK",
+                "reason": f"MeTTa security error: {str(e)[:100]}",
+                "action": "block",
+                "message_override": "I can't process that request due to a security analysis error."
+            }
+            
+    def _convert_security_result_to_gateway(self, result, original_text: str) -> Dict[str, str]:
+        """Convert SecurityResult to gateway response format"""
+        # Map SecurityDecision to gateway format
+        decision_map = {
+            "ALLOW": {"severity": "ALLOW", "action": "allow"},
+            "REVIEW": {"severity": "REVIEW", "action": "allow"},  # Allow with warning in demo
+            "SANITIZE": {"severity": "SANITIZE", "action": "allow"},  # Allow with sanitization
+            "BLOCK": {"severity": "BLOCK", "action": "block"}
+        }
         
-        if self.use_enhanced_guard:
-            return self._enhanced_guard_prompt(user_prompt)
+        decision_str = result.decision.value if hasattr(result.decision, 'value') else str(result.decision)
+        gateway_decision = decision_map.get(decision_str, {"severity": "BLOCK", "action": "block"})
+        
+        # Generate reason from reasoning chain
+        if result.reasoning_chain and len(result.reasoning_chain) > 0:
+            reasoning = result.reasoning_chain[0].conclusion
         else:
-            return self._basic_guard_prompt(user_prompt)
+            reasoning = f"MeTTa analysis completed with {result.confidence:.2f} confidence"
+        
+        # Handle different decision types
+        if gateway_decision["action"] == "block":
+            message_override = "I can't assist with that request due to security concerns."
+        elif decision_str == "SANITIZE":
+            # For sanitization, we'd normally clean the text, but for demo we'll allow with warning
+            message_override = ""
+            reasoning += " (Content would be sanitized in production)"
+        else:
+            message_override = ""
+        
+        return {
+            "severity": gateway_decision["severity"],
+            "reason": reasoning,
+            "action": gateway_decision["action"],
+            "message_override": message_override,
+            "confidence": result.confidence,
+            "threat_score": result.threat_score,
+            "processing_time_ms": result.processing_time_ms
+        }
     
     def _enhanced_guard_prompt(self, user_prompt: str) -> Dict[str, str]:
         """Use enhanced MeTTa Security Guard for prompt analysis"""
@@ -275,22 +380,100 @@ class EnhancedSecurityGateway:
     
     def guard_response(self, model_output: str) -> Dict[str, str]:
         """
-        Guard model response using enhanced or basic security analysis
-        
-        This method provides a compatible interface with the original MeTTaSecurityWrapper
-        while using enhanced reasoning when available.
+        Guard model response using MeTTa orchestration or fallback methods
         
         Args:
-            model_output: The LLM's response text to analyze
+            model_output: The model's output response
             
         Returns:
-            Dictionary with keys: 'severity', 'reason', 'action', 'text'
-            Compatible with original MeTTaSecurityWrapper format
+            Dictionary with severity, reason, action, and text
         """
-        if self.use_enhanced_guard:
-            return self._enhanced_guard_response(model_output)
-        else:
-            return self._basic_guard_response(model_output)
+        try:
+            if self.use_metta_guard:
+                return self._metta_guard_response(model_output)
+            elif self.use_enhanced_guard:
+                return self._enhanced_guard_response(model_output)
+            elif self.metta:
+                return self._basic_guard_response(model_output)
+            else:
+                return self._heuristic_guard_response(model_output)
+        except Exception as e:
+            self._log(f"❌ Response guard error: {e}")
+            return {
+                "severity": "BLOCK",
+                "reason": f"Response security error: {str(e)[:100]}",
+                "action": "block",
+                "text": "I can't provide that response due to a security check error."
+            }
+    
+    def _metta_guard_response(self, model_output: str) -> Dict[str, str]:
+        """Use MeTTa-orchestrated Security Guard for response analysis"""
+        try:
+            # Analyze response using MeTTa orchestrator
+            result = self.metta_guard.guard_response(
+                model_output,
+                context=self.security_context,
+                metadata={
+                    "source": "model_response", 
+                    "timestamp": time.time(),
+                    "content_length": len(model_output)
+                }
+            )
+            
+            # Convert SecurityResult to response format
+            gateway_result = self._convert_security_result_to_gateway(result, model_output)
+            
+            # For responses, we need to handle the text field differently
+            if gateway_result["action"] == "block":
+                return {
+                    "severity": "BLOCK",
+                    "reason": gateway_result["reason"],
+                    "action": "block",
+                    "text": "I can't provide that response due to security concerns."
+                }
+            elif gateway_result["severity"] == "SANITIZE":
+                # In production, we would sanitize the text here
+                # For demo, we'll return cleaned text
+                sanitized_text = self._basic_sanitize_text(model_output)
+                return {
+                    "severity": "SANITIZE",
+                    "reason": gateway_result["reason"],
+                    "action": "allow",
+                    "text": sanitized_text
+                }
+            else:
+                # Allow response as-is
+                return {
+                    "severity": gateway_result["severity"],
+                    "reason": gateway_result["reason"],
+                    "action": "allow",
+                    "text": model_output
+                }
+                
+        except Exception as e:
+            self._log(f"❌ MeTTa guard response error: {e}")
+            return {
+                "severity": "BLOCK",
+                "reason": f"MeTTa response security error: {str(e)[:100]}",
+                "action": "block",
+                "text": "I can't provide that response due to a security analysis error."
+            }
+    
+    def _basic_sanitize_text(self, text: str) -> str:
+        """Basic text sanitization for demo purposes"""
+        if not text:
+            return text
+            
+        # Remove ANSI escape sequences
+        import re
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        sanitized = ansi_escape.sub('', text)
+        
+        # Remove other control characters
+        sanitized = sanitized.replace('\x07', '')  # Bell character
+        sanitized = sanitized.replace('\x1b', '')  # Escape character
+        
+        return sanitized
     
     def _enhanced_guard_response(self, model_output: str) -> Dict[str, str]:
         """Use enhanced MeTTa Security Guard for response analysis"""
@@ -388,6 +571,40 @@ class EnhancedSecurityGateway:
             return {
                 "severity": "BLOCK",
                 "reason": f"Basic response security error: {str(e)[:100]}",
+                "action": "block",
+                "text": "I can't provide that response due to a security check error."
+            }
+    
+    def _heuristic_guard_response(self, model_output: str) -> Dict[str, str]:
+        """Simple heuristic-based response analysis as final fallback"""
+        try:
+            # Basic sanitization - remove ANSI sequences and control characters
+            clean_output = self._basic_sanitize_text(model_output)
+            
+            # Simple danger pattern detection
+            danger_patterns = ["password", "hack", "exploit", "rm -rf", "DELETE FROM", 
+                             "system(", "exec(", "eval(", "malware", "virus"]
+            
+            if any(pattern in clean_output.lower() for pattern in danger_patterns):
+                return {
+                    "severity": "BLOCK",
+                    "reason": "Heuristic response analysis detected potentially dangerous content",
+                    "action": "block",
+                    "text": "I can't provide that response due to security concerns."
+                }
+            
+            return {
+                "severity": "ALLOW",
+                "reason": "Heuristic response analysis - output appears safe",
+                "action": "allow",
+                "text": clean_output
+            }
+            
+        except Exception as e:
+            self._log(f"❌ Heuristic response guard error: {e}")
+            return {
+                "severity": "BLOCK",
+                "reason": f"Heuristic response security error: {str(e)[:100]}",
                 "action": "block",
                 "text": "I can't provide that response due to a security check error."
             }

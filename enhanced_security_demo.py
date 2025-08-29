@@ -202,7 +202,7 @@ class EnhancedSecurityDemo:
                 "elapsed_time": time.time() - start_time
             }
     
-    def run_attack_scenario_tests(self, num_tests: int = 20, prompts_file: str = "prompts/prompts.json") -> List[Dict[str, Any]]:
+    def run_attack_scenario_tests(self, num_tests: int = 100, prompts_file: str = "prompts/prompts.json") -> List[Dict[str, Any]]:
         """
         Run tests against curated attack scenarios
         
@@ -308,7 +308,7 @@ def main():
                        help="Ollama API base URL")
     parser.add_argument("--api-key", default=os.getenv("OPENAI_API_KEY", "ollama"),
                        help="API key")
-    parser.add_argument("--attack-tests", type=int, default=10,
+    parser.add_argument("--attack-tests", type=int, default=100,
                        help="Number of attack scenario tests to run (max 100)")
     parser.add_argument("--prompts-file", default="prompts/prompts.json",
                        help="Path to JSON file containing exactly 100 curated prompts")
