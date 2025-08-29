@@ -16,11 +16,16 @@ import sys
 import os
 import argparse
 import time
+import uuid
 from typing import List, Dict, Any
 
 # Import the enhanced components
 from security_gateway import MeTTaSecurityWrapper, EnhancedSecurityGateway
 from ollama_connector import create_ollama_connector, chat_completion
+
+# Import prompts loader
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+from prompts_loader import load_curated_prompts
 
 # Import existing test scenarios (preserved unchanged)
 try:
@@ -197,25 +202,30 @@ class EnhancedSecurityDemo:
                 "elapsed_time": time.time() - start_time
             }
     
-    def run_attack_scenario_tests(self, num_tests: int = 20) -> List[Dict[str, Any]]:
+    def run_attack_scenario_tests(self, num_tests: int = 20, prompts_file: str = "prompts/prompts.json") -> List[Dict[str, Any]]:
         """
         Run tests against curated attack scenarios
         
         Args:
             num_tests: Number of tests to run (max 100)
+            prompts_file: Path to JSON file containing curated prompts
             
         Returns:
             List of test results
         """
-        if not ATTACK_SCENARIOS_AVAILABLE:
-            print("❌ Attack scenarios not available - skipping attack tests")
+        # Load curated prompts from JSON file
+        try:
+            curated_prompts = load_curated_prompts(prompts_file)
+            print(f"✅ Loaded {len(curated_prompts)} curated prompts from {prompts_file}")
+        except RuntimeError as e:
+            print(f"❌ Failed to load prompts from {prompts_file}: {e}")
             return []
         
         print(f"\n🎯 Running {num_tests} Attack Scenario Tests")
         print("=" * 50)
         
         # Use the first N attack scenarios
-        test_prompts = tpi.FAILED_ATTACKS[:num_tests]
+        test_prompts = curated_prompts[:num_tests]
         results = []
         
         for i, prompt in enumerate(test_prompts, 1):
@@ -300,6 +310,10 @@ def main():
                        help="API key")
     parser.add_argument("--attack-tests", type=int, default=10,
                        help="Number of attack scenario tests to run (max 100)")
+    parser.add_argument("--prompts-file", default="prompts/prompts.json",
+                       help="Path to JSON file containing exactly 100 curated prompts")
+    parser.add_argument("--out", default=f"_security_logs/security_demo_{uuid.uuid4().hex[:16]}.jsonl",
+                       help="Output file for JSONL results")
     parser.add_argument("--skip-benign", action="store_true",
                        help="Skip benign prompt tests")
     parser.add_argument("--basic-guard", action="store_true", 
@@ -337,7 +351,7 @@ def main():
     
     # Run attack scenario tests
     if args.attack_tests > 0:
-        attack_results = demo.run_attack_scenario_tests(args.attack_tests)
+        attack_results = demo.run_attack_scenario_tests(args.attack_tests, args.prompts_file)
         all_results.extend(attack_results)
     
     # Run benign tests
@@ -347,7 +361,15 @@ def main():
     
     # Print summary
     demo.print_summary(all_results)
-    
+
+    # Write JSONL output
+    if all_results:
+        import json
+        with open(args.out, 'w') as f:
+            for result in all_results:
+                f.write(json.dumps(result) + '\n')
+        print(f"\n📄 Wrote {len(all_results)} results to {args.out}")
+
     print(f"\n🎉 Enhanced Security Demo Complete!")
     print("   • Enhanced MeTTa Security Guard: ✅ Operational")
     print("   • Real Ollama Integration: ✅ Operational") 
