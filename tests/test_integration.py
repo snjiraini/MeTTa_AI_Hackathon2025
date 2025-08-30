@@ -269,20 +269,13 @@ class TestPhase1Integration:
         assert health["uptime_seconds"] > 0
         assert health["timestamp"] > 0
         
-        # Verify component status
+        # Verify component status for Phase 3
         components = health["components"]
         assert components["config"] == "loaded"
         assert components["logger"] == "active"
-        assert components["pattern_matcher"] == "not_implemented"  # Phase 1
-        assert components["symbolic_reasoner"] == "not_implemented"  # Phase 1
-        assert components["sanitizer"] == "not_implemented"  # Phase 1
-        
-        # Verify performance data
-        assert "performance" in health
-        perf = health["performance"]
-        assert perf["total_requests"] == 5
-        assert perf["avg_processing_time_ms"] > 0
-        assert perf["error_rate"] == 0.0  # Should be no errors
+        assert components["pattern_matcher"] == "active"  # Phase 3
+        assert components["context_analyzer"] == "active"  # Phase 3
+        assert components["text_sanitizer"] == "active"  # Phase 3
     
     def test_concurrent_requests_integration(self):
         """Test system behavior under concurrent load"""

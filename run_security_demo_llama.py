@@ -55,7 +55,7 @@ try:
     
     # Import src as a package to enable relative imports
     import src
-    from src.metta_security_guard import MeTTaSecurityGuard
+    from metta_security_guard import MeTTaSecurityGuard
     from src.core_types import SecurityContext
     
     print("✅ MeTTa Security Guard loaded successfully")

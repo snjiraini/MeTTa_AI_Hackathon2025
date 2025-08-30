@@ -308,13 +308,13 @@ class SecurityGuard:
             "status": "healthy",
             "timestamp": time.time(),
             "uptime_seconds": time.time() - self._initialization_time,
-            "phase": 2,
+            "phase": self._phase,
             "components": {
                 "config": "loaded",
                 "logger": "active",
                 "pattern_matcher": "active" if self._pattern_matcher is not None else "not_loaded",
                 "text_sanitizer": "active" if self._sanitizer is not None else "not_loaded", 
-                "symbolic_reasoner": "not_implemented" if self._symbolic_reasoner is None else "active"
+                "context_analyzer": "active" if self._context_analyzer is not None else "not_loaded"
             }
         }
     

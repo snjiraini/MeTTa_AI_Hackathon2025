@@ -36,7 +36,7 @@ ENHANCED_GUARD_AVAILABLE = False
 
 try:
     # Import MeTTa-orchestrated Security Guard components
-    import src.metta_security_guard as msg
+    import metta_security_guard as msg
     import src.core_types as ct
     import src.config as cfg
     MeTTaSecurityGuard = msg.MeTTaSecurityGuard
