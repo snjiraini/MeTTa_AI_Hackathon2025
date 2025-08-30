@@ -18,13 +18,8 @@ from .core_types import SecurityResult, SecurityDecision, SecurityContext, Reaso
 from .config import SecurityConfig, get_config
 from .logging_utils import get_logger, performance_timer
 
-# Import MeTTa runtime
-try:
-    from hyperon import MeTTa
-    METTA_AVAILABLE = True
-except ImportError:
-    print("⚠️  MeTTa runtime not available - using fallback mode")
-    METTA_AVAILABLE = False
+# Import MeTTa runtime - REQUIRED (no fallback)
+from hyperon import MeTTa
 
 
 @dataclass 
@@ -85,12 +80,8 @@ class MeTTaOrchestrator:
     
     def _init_metta_runtime(self) -> None:
         """Initialize MeTTa runtime and load knowledge base"""
-        if not METTA_AVAILABLE:
-            self.logger.logger.warning("MeTTa runtime not available - using fallback mode")
-            return
-            
         try:
-            # Create MeTTa interpreter
+            # Create MeTTa interpreter - REQUIRED (no fallback)
             self.metta = MeTTa()
             self.logger.logger.info("MeTTa interpreter created successfully")
             
@@ -307,9 +298,6 @@ class MeTTaOrchestrator:
 
     def _run_health_check(self) -> bool:
         """Run MeTTa health check"""
-        if not self.metta or not self.kb_loaded:
-            return False
-            
         try:
             # Test basic MeTTa functionality
             result = self.metta.run("! (health-check $status)")
@@ -320,7 +308,7 @@ class MeTTaOrchestrator:
             return False
         except Exception as e:
             self.logger.logger.error(f"MeTTa health check failed: {e}")
-            return False
+            raise  # Fail hard instead of fallback
     
     def analyze_security(self, text: str, context: str = "unknown", 
                         metadata: Dict[str, Any] = None) -> MeTTaSecurityResult:
@@ -344,10 +332,6 @@ class MeTTaOrchestrator:
             cached_result.processing_time_ms = (time.time() - start_time) * 1000
             return cached_result
         
-        # Fallback if MeTTa not available
-        if not self.metta or not self.kb_loaded:
-            return self._fallback_analysis(text, context, metadata)
-            
         try:
             # Sanitize inputs for MeTTa
             safe_text = self._sanitize_for_metta(text)
@@ -507,7 +491,7 @@ class MeTTaOrchestrator:
             
         except Exception as e:
             self.logger.logger.error(f"MeTTa security analysis failed: {e}")
-            return self._fallback_analysis(text, context, metadata)
+            raise  # Fail hard - no fallback allowed
     
     def _sanitize_for_metta(self, text: str) -> str:
         """Sanitize text for safe MeTTa processing"""
@@ -612,51 +596,6 @@ class MeTTaOrchestrator:
             self.logger.logger.debug(f"Failed to query context analysis: {e}")
         return {}
     
-    def _fallback_analysis(self, text: str, context: str, 
-                          metadata: Dict[str, Any] = None) -> MeTTaSecurityResult:
-        """Fallback security analysis when MeTTa is unavailable"""
-        self.logger.logger.warning("Using fallback security analysis")
-        
-        # Simple heuristic-based analysis
-        text_lower = text.lower()
-        threat_keywords = [
-            "ignore instructions", "jailbreak", "dan mode", 
-            "hack", "exploit", "bypass", "override",
-            "\\x1b[", "\\033[", "\x1b[", "\033["
-        ]
-        
-        detected_threats = [kw for kw in threat_keywords if kw in text_lower]
-        threat_score = min(1.0, len(detected_threats) * 0.3)
-        
-        # Simple decision logic
-        if threat_score > 0.7:
-            decision = "block"
-            confidence = 0.8
-            reasoning = f"Fallback analysis: High threat score ({threat_score:.2f})"
-        elif "\\x1b[" in text or "\\033[" in text:
-            decision = "sanitize"
-            confidence = 0.7
-            reasoning = "Fallback analysis: ANSI escape sequences detected"
-        elif threat_score > 0.3:
-            decision = "review"
-            confidence = 0.6
-            reasoning = f"Fallback analysis: Moderate threat score ({threat_score:.2f})"
-        else:
-            decision = "allow"
-            confidence = 0.5
-            reasoning = "Fallback analysis: No significant threats detected"
-        
-        return MeTTaSecurityResult(
-            decision=decision,
-            confidence=confidence,
-            reasoning=reasoning,
-            threat_score=threat_score,
-            patterns_detected=detected_threats[:3],  # Limit to first 3
-            context_analysis={context: 0.5},
-            processing_time_ms=1.0,  # Minimal processing time for fallback
-            metadata=metadata or {}
-        )
-    
     def _update_performance_stats(self, processing_time_ms: float) -> None:
         """Update performance statistics"""
         self.total_queries += 1
@@ -677,7 +616,7 @@ class MeTTaOrchestrator:
             "total_time_ms": self.total_time_ms,
             "average_time_ms": avg_time,
             "cache_hits": len(self.cache),
-            "metta_available": METTA_AVAILABLE,
+            "metta_available": True,  # Always true - no fallback
             "kb_loaded": self.kb_loaded
         }
     

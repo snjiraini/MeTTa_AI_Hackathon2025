@@ -3,18 +3,14 @@
 # 🛡️ MeTTa Security Guard Demo Script
 # ===================================
 # 
-# Comprehensive demonstration of MeTTa-orchestrated LLM security system
-# All security decisions are now made through symbolic reasoning
+# MeTTa-orchestrated LLM security system demonstration
+# Choose between input filtering or output filtering approaches
 #
-# Available Demos:
-# - Phase 2 Enhanced: Advanced pattern detection with context awareness
-# - Phase 3 Advanced: Sophisticated symbolic reasoning and threat analysis  
-# - Comprehensive: Complete system overview with all MeTTa capabilities
-# - Legacy Security: Original security demo (for comparison)
-# - Basic Security: Simple security demonstration
+# Security Options:
+# 1. Input Security: Analyze user prompts BEFORE sending to LLM
+# 2. Output Security: Analyze LLM responses BEFORE showing to user
 #
-# Usage: ./run_demo.sh [option]
-# Options: comprehensive, phase2, phase3, legacy, basic, interactive
+# Usage: ./run_demo.sh [input|output] or run interactively
 
 set -e
 
@@ -23,8 +19,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to print colored headers
@@ -46,45 +42,27 @@ print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
+print_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
 # Demo Functions
-run_comprehensive_demo() {
-    print_header "Comprehensive MeTTa Security Demo"
-    print_info "Running complete MeTTa symbolic reasoning demonstration..."
-    echo ""
-    python comprehensive_metta_demo.py
-    print_success "Comprehensive demo completed!"
-}
-
-run_phase2_demo() {
-    print_header "Phase 2: Enhanced Pattern Detection Demo"
-    print_info "Running Phase 2 enhanced MeTTa pattern detection..."
-    echo ""
-    python demo_phase2_enhanced.py
-    print_success "Phase 2 demo completed!"
-}
-
-run_phase3_demo() {
-    print_header "Phase 3: Advanced Symbolic Reasoning Demo"
-    print_info "Running Phase 3 advanced MeTTa symbolic reasoning..."
-    echo ""
-    python demo_phase3_advanced.py
-    print_success "Phase 3 demo completed!"
-}
-
-run_legacy_demo() {
-    print_header "Legacy Security Demo (For Comparison)"
-    print_info "Running original security demo for comparison..."
+run_input_security_demo() {
+    print_header "Input Security Demo"
+    print_info "Analyzing user prompts BEFORE sending to LLM..."
+    print_warning "This analyzes vulnerability prompts using MeTTa symbolic reasoning"
     echo ""
     python run_security_demo.py
-    print_success "Legacy demo completed!"
+    print_success "Input security demo completed!"
 }
 
-run_basic_demo() {
-    print_header "Basic Security Demo"
-    print_info "Running basic security demonstration..."
+run_output_security_demo() {
+    print_header "Output Security Demo"  
+    print_info "Analyzing LLM responses BEFORE showing to user..."
+    print_warning "This sends prompts to LLaMA and filters the model's responses"
     echo ""
-    python enhanced_security_demo.py
-    print_success "Basic demo completed!"
+    python run_security_demo_llama.py --max-prompts 10
+    print_success "Output security demo completed!"
 }
 
 # Interactive menu
@@ -92,16 +70,19 @@ show_menu() {
     echo -e "${PURPLE}🛡️  MeTTa Security Guard Demo Menu${NC}"
     echo -e "${PURPLE}===================================${NC}"
     echo ""
-    echo -e "${YELLOW}Select a demo to run:${NC}"
+    echo -e "${YELLOW}Choose your security approach:${NC}"
     echo ""
-    echo -e "  ${GREEN}1)${NC} Comprehensive MeTTa Demo (Recommended)"
-    echo -e "  ${GREEN}2)${NC} Phase 2: Enhanced Pattern Detection"
-    echo -e "  ${GREEN}3)${NC} Phase 3: Advanced Symbolic Reasoning"
-    echo -e "  ${GREEN}4)${NC} Legacy Security Demo (For Comparison)"
-    echo -e "  ${GREEN}5)${NC} Basic Security Demo"
-    echo -e "  ${RED}6)${NC} Exit"
+    echo -e "  ${GREEN}1)${NC} Input Security  - Check user prompts ${BLUE}BEFORE${NC} sending to LLM"
+    echo -e "     ${CYAN}└─${NC} Prevents malicious prompts from reaching the model"
+    echo -e "     ${CYAN}└─${NC} Uses: run_security_demo.py"
     echo ""
-    echo -ne "${YELLOW}Enter your choice [1-6]: ${NC}"
+    echo -e "  ${GREEN}2)${NC} Output Security - Check LLM responses ${BLUE}BEFORE${NC} showing to user" 
+    echo -e "     ${CYAN}└─${NC} Filters dangerous content from model responses"
+    echo -e "     ${CYAN}└─${NC} Uses: run_security_demo_llama.py"
+    echo ""
+    echo -e "  ${RED}3)${NC} Exit"
+    echo ""
+    echo -ne "${YELLOW}Enter your choice [1-3]: ${NC}"
 }
 
 # Interactive mode
@@ -114,26 +95,17 @@ interactive_mode() {
         
         case $choice in
             1)
-                run_comprehensive_demo
+                run_input_security_demo
                 ;;
             2)
-                run_phase2_demo
+                run_output_security_demo
                 ;;
             3)
-                run_phase3_demo
-                ;;
-            4)
-                run_legacy_demo
-                ;;
-            5)
-                run_basic_demo
-                ;;
-            6)
                 print_info "Exiting demo..."
                 exit 0
                 ;;
             *)
-                print_error "Invalid option. Please choose 1-6."
+                print_error "Invalid option. Please choose 1-3."
                 ;;
         esac
         
@@ -150,20 +122,11 @@ if [ $# -eq 0 ]; then
 else
     # Command line mode
     case "$1" in
-        "comprehensive")
-            run_comprehensive_demo
+        "input")
+            run_input_security_demo
             ;;
-        "phase2")
-            run_phase2_demo
-            ;;
-        "phase3")
-            run_phase3_demo
-            ;;
-        "legacy")
-            run_legacy_demo
-            ;;
-        "basic")
-            run_basic_demo
+        "output")
+            run_output_security_demo
             ;;
         "interactive")
             interactive_mode
@@ -171,15 +134,16 @@ else
         *)
             print_error "Invalid option: $1"
             echo ""
-            print_info "Usage: $0 [comprehensive|phase2|phase3|legacy|basic|interactive]"
+            print_info "Usage: $0 [input|output|interactive]"
             echo ""
             print_info "Available options:"
-            echo "  comprehensive - Complete MeTTa symbolic reasoning demo"
-            echo "  phase2        - Enhanced pattern detection demo"
-            echo "  phase3        - Advanced symbolic reasoning demo"
-            echo "  legacy        - Original security demo (comparison)"
-            echo "  basic         - Basic security demonstration"
-            echo "  interactive   - Interactive menu mode"
+            echo "  input       - Check user prompts before sending to LLM"
+            echo "  output      - Check LLM responses before showing to user"
+            echo "  interactive - Interactive menu mode (default)"
+            echo ""
+            echo -e "${CYAN}Security Approaches:${NC}"
+            echo -e "  ${GREEN}Input Security:${NC}  User Prompt → ${BLUE}MeTTa Guard${NC} → LLM → Response"
+            echo -e "  ${GREEN}Output Security:${NC} User Prompt → LLM → ${BLUE}MeTTa Guard${NC} → Filtered Response"
             echo ""
             exit 1
             ;;
